@@ -19,6 +19,14 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
     const product = await getProductBySlug(slug);
 
     if (!product) return { title: "teslo | shop | product" };
+    const image = getProductImageUrl(product)[0];
+
+    const customSrc =
+        image
+            ? (image.startsWith('http')
+                ? image
+                : '/products/' + image)
+            : '/imgs/placeholder.jpg';
 
     return {
         title: product.title,
@@ -26,7 +34,7 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
         openGraph: {
             title: product.title,
             description: product.description,
-            images: `/products/${product.images[1]}`, // TODO: Obtener URL real desde el env
+            images: `${customSrc}`, // TODO: Obtener URL real desde el env
         }
     }
 }

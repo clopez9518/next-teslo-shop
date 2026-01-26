@@ -47,7 +47,7 @@ export const CartView = () => {
 
                     <div className="grid grid-cols-2 gap-2">
                         <span>No. Productos</span>
-                        <span className="text-right">{currencyFormatter(totalItems)} Artículos</span>
+                        <span className="text-right">{totalItems} Artículos</span>
 
                         <span>Subtotal</span>
                         <span className="text-right">{currencyFormatter(subTotal)}</span>
