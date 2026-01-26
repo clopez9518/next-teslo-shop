@@ -37,19 +37,18 @@ async function main() {
     }, {} as Record<string, string>);
 
     // 4. Insertar productos
-    await prisma.$transaction(
-        products.map(({ images, type, ...product }) =>
-            prisma.product.create({
-                data: {
-                    ...product,
-                    categoryId: categoriesMap[type],
-                    images: {
-                        create: images.map((url) => ({ url })),
-                    },
+    for (const { images, type, ...product } of products) {
+        await prisma.product.create({
+            data: {
+                ...product,
+                categoryId: categoriesMap[type],
+                images: {
+                    create: images.map((url) => ({ url })),
                 },
-            })
-        )
-    );
+            },
+        });
+    }
+
 
 
     // 5. Insertar paises

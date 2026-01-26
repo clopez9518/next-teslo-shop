@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run prisma:deploy && next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx seed/seed-database.ts"
+    "seed": "tsx seed/seed-database.ts",
+    "prisma:deploy": "npx prisma migrate deploy && npx prisma generate"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "^8.9.2",
