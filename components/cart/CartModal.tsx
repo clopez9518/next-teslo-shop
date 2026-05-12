@@ -7,7 +7,7 @@ export const CartModal = () => {
     const { cart, setIsModalOpen } = useCartStore((state) => state);
 
     return (
-        <div className="w-90 bg-white rounded-xl shadow-2xl p-4">
+        <div className="w-full sm:w-80 bg-white rounded-xl shadow-2xl p-4 z-50">
             <div className="flex flex-col gap-4 max-h-64 overflow-y-auto">
                 {
                     cart.map(item => (

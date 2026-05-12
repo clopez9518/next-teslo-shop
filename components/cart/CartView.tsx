@@ -29,7 +29,7 @@ export const CartView = () => {
             {/* Carrito */}
             <div className="flex flex-col mt-5">
                 <span className="text-xl">Agregar más items</span>
-                <Link href="/shop" className="underline mb-5">Continuar comprando</Link>
+                <Link href="/" className="underline mb-5">Continuar comprando</Link>
 
                 {/* Items */}
                 {

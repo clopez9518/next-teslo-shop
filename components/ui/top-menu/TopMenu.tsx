@@ -65,7 +65,15 @@ export const TopMenu = () => {
                         )
                     }
 
-                    <div className={"absolute top-5 right-0 hidden" + (isModalOpen ? "block fade-in" : "")}>
+                    {/* Mobile: fixed overlay at top-right; sm+: absolute dropdown */}
+                    <div
+                        className={
+                            "z-50 " +
+                            (isModalOpen
+                                ? "fixed top-16 left-0 right-0 mx-4 sm:mx-0 sm:absolute sm:top-5 sm:right-0 sm:left-auto fade-in"
+                                : "hidden")
+                        }
+                    >
                         <CartModal />
                     </div>
                 </div>
