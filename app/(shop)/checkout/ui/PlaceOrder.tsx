@@ -1,132 +1,160 @@
-'use client';
+"use client";
 
-import Link from 'next/link'
-import { useCartStore } from '@/store';
-import { useEffect, useState } from 'react';
-import { useAddressStore } from '@/store/address/address-store';
-import { currencyFormatter } from '@/utils/currencyFormatter';
-import clsx from 'clsx';
-import { placeOrder } from '@/actions';
-import { useRouter } from 'next/navigation';
+import Link from "next/link";
+import clsx from "clsx";
+import { useRouter } from "next/navigation";
+import { useState, useSyncExternalStore } from "react";
+import { placeOrder } from "@/actions";
+import { currencyFormatter } from "@/utils/currencyFormatter";
+import { useCartStore, useAddressStore } from "@/store";
+
+const emptySubscribe = () => () => {};
 
 export const PlaceOrder = () => {
+  const router = useRouter();
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const loaded = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
-    const router = useRouter();
+  const { cart, getSummary, clearCart } = useCartStore();
+  const { address } = useAddressStore();
+  const summary = getSummary();
 
-    const [loaded, setLoaded] = useState(false);
-    const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('');
-    const { cart, getSummary, clearCart } = useCartStore();
-
-    const { address } = useAddressStore();
-
-    const summary = getSummary();
-
-    useEffect(() => {
-        setLoaded(true);
-    }, []);
-
-    if (!loaded) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <p>Procesando...</p>
-            </div>
-        )
-    }
-
-    const placeOrderHandler = async () => {
-        setIsPlacingOrder(true);
-
-        const productsToOrder = cart.map(product => ({
-            productId: product.id,
-            quantity: product.quantity,
-            size: product.size,
-        }));
-
-        const response = await placeOrder(productsToOrder, address);
-
-        if (!response.ok) {
-            setIsPlacingOrder(false);
-            setErrorMessage(response.message);
-            return;
-        }
-
-        clearCart();
-
-        //Redirigir a la orden
-        router.replace(`/orders/${response.order?.id}`);
-
-        setIsPlacingOrder(false);
-    }
-
+  if (!loaded) {
     return (
-        <div>
-            <div className="bg-white rounded-xl shadow-xl p-7 sm:mt-5">
-                <h2 className="text-xl sm:text-2xl mb-2"> Resumen de la compra </h2>
-
-                <div className="grid grid-cols-2 gap-2">
-                    <span>No. Productos</span>
-                    <span className="text-right">{summary.totalItems} Artículos</span>
-
-                    <span>Subtotal</span>
-                    <span className="text-right">{currencyFormatter(summary.subTotal)}</span>
-
-                    <span>Impuestos (19%)</span>
-                    <span className="text-right">{currencyFormatter(summary.tax)}</span>
-
-                    <span>Envío</span>
-                    <span className="text-right">{currencyFormatter(summary.shipping)}</span>
-
-                    <span className="font-bold text-xl">Total</span>
-                    <span className="text-right font-bold text-xl">{currencyFormatter(summary.total)}</span>
-
-                </div>
-
-                <hr className="my-5 text-gray-400" />
-
-                <h2 className="font-bold text-xl">Detalles del envío</h2>
-                <div className="grid grid-cols-2 mt-5">
-                    <span>Nombre</span>
-                    <span className="text-right">{address.firstName}</span>
-
-                    <span>Apellido</span>
-                    <span className="text-right">{address.lastName}</span>
-
-                    <span>Dirección</span>
-                    <span className="text-right">{address.address}</span>
-
-                    <span>Ciudad</span>
-                    <span className="text-right">{address.city}</span>
-
-                    <span>Código postal</span>
-                    <span className="text-right">{address.zip}</span>
-
-                    <span>País</span>
-                    <span className="text-right">{address.country}</span>
-
-                </div>
-
-                <div className="mt-5 mb-2 w-full">
-                    <p className="text-xs text-gray-500 mb-2">
-                        Al hacer clic en finalizar compra, aceptas nuestros <Link href="/terms" className="underline">términos y condiciones.</Link>
-                    </p>
-                    <button
-                        disabled={isPlacingOrder}
-                        className={clsx(
-                            "flex btn-primary justify-center",
-                            isPlacingOrder && "opacity-50 cursor-not-allowed"
-                        )}
-                        onClick={placeOrderHandler}
-                    // href="/orders/43123"
-                    >
-                        Finalizar compra
-                    </button>
-
-                    <p className="text-red-500 mt-2">{errorMessage}</p>
-                    <Link className="flex justify-end mt-2 underline" href="/">Continuar comprando</Link>
-                </div>
-            </div>
-
+      <aside className="border border-neutral-200 bg-[#f6f6f2] p-7">
+        <div className="animate-pulse space-y-4">
+          <div className="h-3 w-24 bg-neutral-200" />
+          <div className="h-8 w-40 bg-neutral-200" />
+          <div className="h-24 w-full bg-neutral-200" />
+          <div className="h-12 w-full bg-neutral-300" />
         </div>
-    )
-}
+      </aside>
+    );
+  }
+
+  const placeOrderHandler = async () => {
+    setIsPlacingOrder(true);
+    setErrorMessage("");
+
+    const productsToOrder = cart.map((product) => ({
+      productId: product.id,
+      quantity: product.quantity,
+      size: product.size,
+    }));
+
+    const response = await placeOrder(productsToOrder, address);
+
+    if (!response.ok) {
+      setIsPlacingOrder(false);
+      setErrorMessage(response.message);
+      return;
+    }
+
+    clearCart();
+    router.replace(`/orders/${response.order?.id}`);
+    setIsPlacingOrder(false);
+  };
+
+  return (
+    <aside className="lg:sticky lg:top-24 lg:self-start">
+      <div className="border border-neutral-200 bg-[#f6f6f2] p-6 sm:p-7">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500">
+          Resumen
+        </p>
+        <h2 className="mt-3 text-3xl font-semibold">Orden</h2>
+
+        <div className="mt-7 space-y-4 text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-neutral-600">Productos</span>
+            <span className="font-semibold">{summary.totalItems} artículos</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-neutral-600">Subtotal</span>
+            <span className="font-semibold">{currencyFormatter(summary.subTotal)}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-neutral-600">Impuestos (19%)</span>
+            <span className="font-semibold">{currencyFormatter(summary.tax)}</span>
+          </div>
+          <div className="flex justify-between gap-4 border-b border-neutral-300 pb-5">
+            <span className="text-neutral-600">Envío</span>
+            <span className="font-semibold">
+              {summary.shipping === 0 ? "Gratis" : currencyFormatter(summary.shipping)}
+            </span>
+          </div>
+          <div className="flex items-end justify-between gap-4 pt-1">
+            <span className="text-lg font-semibold">Total</span>
+            <span className="text-2xl font-semibold">{currencyFormatter(summary.total)}</span>
+          </div>
+        </div>
+
+        <div className="mt-8 border-t border-neutral-300 pt-6">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">
+              Entrega
+            </p>
+            <Link
+              href="/checkout/address"
+              className="text-sm font-semibold text-neutral-500 underline-offset-4 transition-colors hover:text-neutral-950 hover:underline"
+            >
+              Editar
+            </Link>
+          </div>
+
+          <div className="space-y-2 text-sm text-neutral-700">
+            <p className="font-semibold text-neutral-950">
+              {address.firstName} {address.lastName}
+            </p>
+            <p>{address.address}</p>
+            {address.address2 && <p>{address.address2}</p>}
+            <p>
+              {address.city}, {address.zip}
+            </p>
+            <p>{address.country}</p>
+            <p>{address.phone}</p>
+          </div>
+        </div>
+
+        <div className="mt-7">
+          <p className="mb-3 text-xs leading-5 text-neutral-500">
+            Al finalizar compra aceptas nuestros{" "}
+            <Link href="/terms" className="underline underline-offset-4">
+              terminos y condiciones
+            </Link>
+            .
+          </p>
+
+          <button
+            disabled={isPlacingOrder || cart.length === 0}
+            className={clsx(
+              "flex h-12 w-full items-center justify-center bg-neutral-950 text-sm font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-[(--primary)]",
+              (isPlacingOrder || cart.length === 0) && "cursor-not-allowed opacity-50 hover:bg-neutral-950"
+            )}
+            onClick={placeOrderHandler}
+            type="button"
+          >
+            {isPlacingOrder ? "Creando orden..." : "Finalizar compra"}
+          </button>
+
+          {errorMessage && (
+            <div className="mt-4 border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+              {errorMessage}
+            </div>
+          )}
+
+          <Link
+            className="mt-4 block text-center text-sm font-semibold text-neutral-500 underline-offset-4 transition-colors hover:text-neutral-950 hover:underline"
+            href="/"
+          >
+            Continuar comprando
+          </Link>
+        </div>
+      </div>
+    </aside>
+  );
+};

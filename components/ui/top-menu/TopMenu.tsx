@@ -1,90 +1,113 @@
-'use client'
+"use client";
 
-import { montserratAlternates } from "@/config/fonts"
-import Link from "next/link"
-import { IoCartOutline, IoSearchOutline } from "react-icons/io5"
-import { useUiStore } from "@/store"
-import { useCartStore } from "@/store"
-import { useEffect, useState } from "react";
-import { CartModal } from "@/components/cart/CartModal"
+import Link from "next/link";
+import { useSyncExternalStore } from "react";
+import { IoBagOutline, IoMenuOutline, IoSearchOutline } from "react-icons/io5";
+import { CartModal } from "@/components/cart/CartModal";
+import { montserratAlternates } from "@/config/fonts";
+import { useCartStore, useUiStore } from "@/store";
+
+const navItems = [
+  { href: "/category/men", label: "Hombres" },
+  { href: "/category/women", label: "Mujeres" },
+  { href: "/category/kid", label: "Niños" },
+];
+
+const emptySubscribe = () => () => {};
 
 export const TopMenu = () => {
+  const openMenu = useUiStore((state) => state.openMenu);
+  const isMenuOpen = useUiStore((state) => state.isMenuOpen);
+  const { getTotalItems, isModalOpen } = useCartStore((state) => state);
+  const loaded = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
-    const { openMenu, isMenuOpen } = useUiStore();
-    const { getTotalItems, isModalOpen } = useCartStore((state) => state);
-    const totalItems = getTotalItems();
-    const [loaded, setLoaded] = useState(false)
+  const totalItems = getTotalItems();
 
-    useEffect(() => {
-        setLoaded(true);
-    }, []);
+  const handleMenu = () => {
+    if (isMenuOpen) return;
+    openMenu();
+  };
 
-    const handleMenu = () => {
-        if (isMenuOpen) return;
-        openMenu();
-    }
+  return (
+    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
+      <nav className="mx-auto grid h-16 max-w-[1600px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-8">
+        <div className="hidden items-center gap-1 md:flex">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="px-3 py-2 text-sm font-semibold text-neutral-600 transition-colors hover:text-neutral-950"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
 
-    return (
-        <nav className="flex px-5 justify-between items-center w-full">
+        <div className="flex md:hidden">
+          <button
+            aria-label="Abrir menu"
+            className="flex h-10 w-10 items-center justify-center border border-neutral-200 transition-colors hover:border-neutral-950"
+            onClick={handleMenu}
+            type="button"
+          >
+            <IoMenuOutline className="h-5 w-5" />
+          </button>
+        </div>
 
-            {/* Logo */}
-            <Link href="/">
-                <span className={`${montserratAlternates.className} text-2xl font-bold antialiased`}>Teslo</span>
-                <span className="text-xl font-bold antialiased"> | Shop</span>
-                {/* <Image
-                    src="/logo.png"
-                    alt="Logo"
-                    width={100}
-                    height={100}
-                /> */}
+        <Link href="/" className="justify-self-center text-neutral-950">
+          <span className={`${montserratAlternates.className} text-2xl font-bold antialiased`}>Teslo</span>
+          <span className="text-xl font-bold antialiased"> | Shop</span>
+        </Link>
+
+        <div className="flex items-center justify-end gap-2">
+          <Link
+            aria-label="Buscar"
+            href="/search"
+            className="flex h-10 w-10 items-center justify-center border border-transparent text-neutral-700 transition-colors hover:border-neutral-200 hover:text-neutral-950"
+          >
+            <IoSearchOutline className="h-5 w-5" />
+          </Link>
+
+          <div className="relative">
+            <Link
+              aria-label="Carro"
+              href="/cart"
+              className="relative flex h-10 w-10 items-center justify-center border border-transparent text-neutral-700 transition-colors hover:border-neutral-200 hover:text-neutral-950"
+            >
+              <IoBagOutline className="h-5 w-5" />
+              {loaded && totalItems > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center bg-neutral-950 px-1 text-[11px] font-semibold leading-none text-white">
+                  {totalItems}
+                </span>
+              )}
             </Link>
 
-            {/* Center menu */}
-            <div className="hidden sm:block">
-                <Link className="m-2 p-2 rounded-md transition-all hover:bg-gray-100" href={'/category/men'}>Hombres</Link>
-                <Link className="m-2 p-2 rounded-md transition-all hover:bg-gray-100" href={'/category/women'}>Mujeres</Link>
-                <Link className="m-2 p-2 rounded-md transition-all hover:bg-gray-100" href={'/category/kid'}>Niños</Link>
+            <div
+              className={
+                "z-50 " +
+                (isModalOpen
+                  ? "fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-96 fade-in"
+                  : "hidden")
+              }
+            >
+              <CartModal />
             </div>
+          </div>
 
-            {/* Search, cart, menu */}
-            <div className="flex items-center gap-4 m-2 p-2">
-                <Link href={'/search'}><IoSearchOutline className="w-5 h-5" /></Link>
-
-                <div className="relative">
-                    <Link href={'/cart'}><IoCartOutline className="w-5 h-5" /></Link>
-                    {
-                        loaded && (
-                            <>
-
-                                <span
-                                    style={{ padding: '9px' }}
-                                    className="absolute w-4 h-4 -top-2 -right-2 bg-red-500 rounded-full 
-                                text-xs text-center justify-center flex items-center text-white">{totalItems}</span>
-
-                            </>
-                        )
-                    }
-
-                    {/* Mobile: fixed overlay at top-right; sm+: absolute dropdown */}
-                    <div
-                        className={
-                            "z-50 " +
-                            (isModalOpen
-                                ? "fixed top-16 left-0 right-0 mx-4 sm:mx-0 sm:absolute sm:top-5 sm:right-0 sm:left-auto fade-in"
-                                : "hidden")
-                        }
-                    >
-                        <CartModal />
-                    </div>
-                </div>
-
-
-
-                <button onClick={handleMenu} className="rounded-md transition-all hover:bg-gray-100 cursor-pointer p-2">
-                    Menú
-                </button>
-            </div>
-
-        </nav>
-    )
-}
+          <button
+            className="hidden h-10 items-center gap-2 border border-neutral-200 px-4 text-sm font-semibold uppercase tracking-[0.14em] text-neutral-950 transition-colors hover:border-neutral-950 md:flex"
+            onClick={handleMenu}
+            type="button"
+          >
+            Menu
+            <IoMenuOutline className="h-5 w-5" />
+          </button>
+        </div>
+      </nav>
+    </header>
+  );
+};

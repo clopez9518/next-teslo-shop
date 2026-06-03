@@ -1,6 +1,7 @@
 
+type PageItem = number | "...";
 
-export const generatePagesArray = (currentPage: number, totalPages: number): (string | number)[] => {
+export const generatePagesArray = (currentPage: number, totalPages: number): PageItem[] => {
 
     if (totalPages <= 6) {
         return Array.from({ length: totalPages }, (_, index) => index + 1);

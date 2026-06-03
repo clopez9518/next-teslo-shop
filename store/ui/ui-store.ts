@@ -8,6 +8,6 @@ interface State {
 
 export const useUiStore = create<State>()((set) => ({
     isMenuOpen: false,
-    openMenu: () => set((state) => ({ isMenuOpen: true })),
-    closeMenu: () => set((state) => ({ isMenuOpen: false })),
+    openMenu: () => set((state) => (state.isMenuOpen ? state : { isMenuOpen: true })),
+    closeMenu: () => set((state) => (state.isMenuOpen ? { isMenuOpen: false } : state)),
 }))
