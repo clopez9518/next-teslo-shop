@@ -1,198 +1,177 @@
-'use client';
+"use client";
 
-import { registerUser } from "@/actions/auth/register";
-import clsx from "clsx";
 import Link from "next/link";
-import { useState, useTransition } from "react";
-import { useForm, SubmitHandler } from "react-hook-form"
-
+import clsx from "clsx";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { signIn } from 'next-auth/react';
-
+import { useState, useTransition } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { registerUser } from "@/actions/auth/register";
 
 type FormInputs = {
-    name: string;
-    email: string;
-    password: string;
-    passwordConfirmation: string;
-}
+  name: string;
+  email: string;
+  password: string;
+  passwordConfirmation: string;
+};
 
+const inputClassName =
+  "mt-2 h-12 w-full border border-neutral-300 bg-white px-4 text-sm outline-none transition-colors focus:border-neutral-950";
+
+const errorClassName = "mt-2 text-sm font-semibold text-red-600";
 
 export const RegisterForm = () => {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm<FormInputs>();
 
-    const router = useRouter();
-    const [isPending, startTransition] = useTransition();
+  const onSubmit: SubmitHandler<FormInputs> = async (data) => {
+    setErrorMessage(null);
+    const { passwordConfirmation, name, email, password } = data;
 
-    const {
-        register,
-        handleSubmit,
-        watch,
-        formState: { errors, },
-    } = useForm<FormInputs>()
-
-
-    const onSubmit: SubmitHandler<FormInputs> = async (data) => {
-        setErrorMessage(null);
-        const { passwordConfirmation, name, email, password } = data;
-
-        if (password !== passwordConfirmation) {
-            setErrorMessage('Las contraseñas no coinciden')
-            return;
-        }
-
-        const resp = await registerUser({
-            name,
-            email,
-            password,
-            passwordConfirmation,
-        })
-
-        if (!resp.ok) {
-            setErrorMessage(resp.message);
-            return;
-        }
-
-        startTransition(async () => {
-
-            await signIn('credentials', {
-                email,
-                password,
-                redirect: false,
-            });
-
-            router.replace('/')
-
-            // await login(email, password);
-            // router.replace('/');
-        });
-
+    if (password !== passwordConfirmation) {
+      setErrorMessage("Las contrasenas no coinciden");
+      return;
     }
 
-    const password = watch("password");
+    const resp = await registerUser({
+      name,
+      email,
+      password,
+      passwordConfirmation,
+    });
 
-    return (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+    if (!resp.ok) {
+      setErrorMessage(resp.message);
+      return;
+    }
 
-            <label htmlFor="name">Nombre completo</label>
-            <input
-                className={
-                    clsx(
-                        "px-5 py-2 border bg-gray-200 rounded mb-2",
-                        {
-                            "border-red-500": errors.name,
-                        }
-                    )
-                }
-                type="text"
-                {...register("name", {
-                    required: "El nombre es obligatorio"
-                })}
-            />
+    startTransition(async () => {
+      await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-            <p className="text-red-500 text-sm mb-2">{errors.name?.message}</p>
+      router.replace("/");
+    });
+  };
 
-            <label htmlFor="email">Correo electrónico</label>
-            <input
-                className={
-                    clsx(
-                        "px-5 py-2 border bg-gray-200 rounded mb-2",
-                        {
-                            "border-red-500": errors.email,
-                        }
-                    )
-                }
-                type="email"
-                {...register("email", {
-                    required: "El correo es obligatorio",
-                    pattern: {
-                        value: /^[^@]+@[^@]+\.[^@]+$/,
-                        message: "El correo debe ser válido"
-                    }
-                })}
-            />
-            <p className="text-red-500 text-sm mb-2">{errors.email?.message}</p>
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-9 space-y-5">
+      <div>
+        <label htmlFor="name" className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+          Nombre completo
+        </label>
+        <input
+          id="name"
+          className={clsx(inputClassName, errors.name && "border-red-500 focus:border-red-500")}
+          type="text"
+          {...register("name", {
+            required: "El nombre es obligatorio",
+          })}
+        />
+        {errors.name?.message && <p className={errorClassName}>{errors.name.message}</p>}
+      </div>
 
+      <div>
+        <label htmlFor="email" className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+          Correo electronico
+        </label>
+        <input
+          id="email"
+          className={clsx(inputClassName, errors.email && "border-red-500 focus:border-red-500")}
+          type="email"
+          {...register("email", {
+            required: "El correo es obligatorio",
+            pattern: {
+              value: /^[^@]+@[^@]+\.[^@]+$/,
+              message: "El correo debe ser valido",
+            },
+          })}
+        />
+        {errors.email?.message && <p className={errorClassName}>{errors.email.message}</p>}
+      </div>
 
-            <label htmlFor="password">Contraseña</label>
-            <input
-                className={
-                    clsx(
-                        "px-5 py-2 border bg-gray-200 rounded mb-2",
-                        {
-                            "border-red-500": errors.password,
-                        }
-                    )
-                }
-                type="password"
-                {...register("password", {
-                    required: "La contraseña es obligatoria",
-                    minLength: {
-                        value: 6,
-                        message: "La contraseña debe tener al menos 6 caracteres"
-                    }
-                })}
-            />
-            <p className="text-red-500 text-sm mb-2">{errors.password?.message}</p>
+      <div>
+        <label htmlFor="password" className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500">
+          Contrasena
+        </label>
+        <input
+          id="password"
+          className={clsx(inputClassName, errors.password && "border-red-500 focus:border-red-500")}
+          type="password"
+          {...register("password", {
+            required: "La contrasena es obligatoria",
+            minLength: {
+              value: 6,
+              message: "La contrasena debe tener al menos 6 caracteres",
+            },
+          })}
+        />
+        {errors.password?.message && <p className={errorClassName}>{errors.password.message}</p>}
+      </div>
 
-            <label htmlFor="passwordConfirmation">Confirmar contraseña</label>
-            <input
-                className={
-                    clsx(
-                        "px-5 py-2 border bg-gray-200 rounded mb-2",
-                        {
-                            "border-red-500": errors.passwordConfirmation,
-                        }
-                    )
-                }
-                type="password"
-                {...register("passwordConfirmation", {
-                    required: "La confirmación de contraseña es obligatoria",
-                    validate: {
-                        matchesPassword: (value) =>
-                            value === password ||
-                            "Las contraseñas no coinciden"
-                    }
-                })}
-            />
-            <p className="text-red-500 text-sm mb-2">{errors.passwordConfirmation?.message}</p>
+      <div>
+        <label
+          htmlFor="passwordConfirmation"
+          className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-500"
+        >
+          Confirmar contrasena
+        </label>
+        <input
+          id="passwordConfirmation"
+          className={clsx(inputClassName, errors.passwordConfirmation && "border-red-500 focus:border-red-500")}
+          type="password"
+          {...register("passwordConfirmation", {
+            required: "La confirmacion de contrasena es obligatoria",
+            validate: {
+              matchesPassword: (value) => value === getValues("password") || "Las contrasenas no coinciden",
+            },
+          })}
+        />
+        {errors.passwordConfirmation?.message && (
+          <p className={errorClassName}>{errors.passwordConfirmation.message}</p>
+        )}
+      </div>
 
-            <button
-                type="submit"
-                disabled={isPending}
-                className={clsx(
-                    'btn-primary flex items-center justify-center gap-2 transition-all duration-200',
-                    {
-                        'opacity-60 cursor-not-allowed': isPending,
-                    }
-                )}
-            >
-                {isPending && (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                )}
-                {isPending ? 'Registrando...' : 'Registrarse'}
-            </button>
+      {errorMessage && (
+        <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {errorMessage}
+        </div>
+      )}
 
-            {errorMessage && (
-                <p className="text-red-500 text-sm mb-2 mt-5 font-semibold">{errorMessage}</p>
-            )}
+      <button
+        type="submit"
+        disabled={isPending}
+        className={clsx(
+          "flex h-12 w-full items-center justify-center gap-2 bg-neutral-950 text-sm font-semibold uppercase tracking-[0.18em] text-white transition-colors hover:bg-[(--primary)]",
+          isPending && "cursor-not-allowed opacity-60"
+        )}
+      >
+        {isPending && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />}
+        {isPending ? "Registrando..." : "Crear cuenta"}
+      </button>
 
+      <div className="flex items-center gap-3 py-2">
+        <div className="h-px flex-1 bg-neutral-200" />
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-400">O</span>
+        <div className="h-px flex-1 bg-neutral-200" />
+      </div>
 
-            {/* divisor l ine */}
-            <div className="flex items-center my-5">
-                <div className="flex-1 border-t border-gray-500"></div>
-                <div className="px-2 text-gray-800">O</div>
-                <div className="flex-1 border-t border-gray-500"></div>
-            </div>
-
-            <Link
-                href="/auth/login"
-                className="btn-secondary text-center">
-                ¿Ya tienes una cuenta?
-                Iniciar sesión
-            </Link>
-
-        </form>
-    )
-}
+      <Link
+        href="/auth/login"
+        className="flex h-12 w-full items-center justify-center border border-neutral-300 text-sm font-semibold uppercase tracking-[0.16em] text-neutral-950 transition-colors hover:border-neutral-950"
+      >
+        Ya tengo cuenta
+      </Link>
+    </form>
+  );
+};
